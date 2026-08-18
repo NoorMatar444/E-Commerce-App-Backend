@@ -12,6 +12,8 @@ import { UserModule } from './modules/user/user.module';
 import { OrderModule } from './modules/order/order.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ProductModule } from './modules/product/product.module';
+import { CategoryModule } from './modules/category/category.module';
+import { CartModule } from './modules/category/cart/cart.module';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { ProductModule } from './modules/product/product.module';
       envFilePath: ['.env.docker', '.env.dev'],
       isGlobal: true,
     }),
-    EventEmitterModule.forRoot(),
+    EventEmitterModule.forRoot(), // Enables emit() and @OnEvent() across the entire app // EventEmitterModule is used to emit events to the client
     MongooseModule.forRootAsync({
       imports: [ConfigModule], // Ensures ConfigModule is available
 
@@ -55,6 +57,8 @@ import { ProductModule } from './modules/product/product.module';
     UserModule,
     OrderModule,
     ProductModule,
+    CategoryModule,
+    CartModule,
   ],
 
   controllers: [AppController],

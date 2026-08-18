@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
@@ -7,6 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaymentMethod } from 'src/common/enums/order.enum';
 
 export class CreateOrderItemDto {
   @IsMongoId()
@@ -27,4 +29,8 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items!: CreateOrderItemDto[];
+
+  // Needed so card orders can later start a Stripe Checkout Session
+  @IsEnum(PaymentMethod)
+  paymentMethod!: PaymentMethod;
 }

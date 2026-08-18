@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { OrderStatus } from 'src/common/enums/order.enum';
+import { OrderStatus, PaymentMethod } from 'src/common/enums/order.enum';
 
 @Schema()
 export class OrderItem {
@@ -48,6 +48,18 @@ export class Order {
     default: OrderStatus.PENDING,
   })
   status!: OrderStatus;
+
+  @Prop({
+    type: String,
+    enum: PaymentMethod,
+  })
+  paymentMethod!: PaymentMethod;
+
+  // Stripe Checkout Session id, used to match the webhook back to this order
+  @Prop({
+    type: String,
+  })
+  stripeSessionId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

@@ -1,9 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import multer from 'multer';
-import { Request } from 'express';
-import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import multer from 'multer';
+import { randomUUID } from 'node:crypto';
+import { tmpdir } from 'node:os';
 import { storageApproachEnum } from '../enums/multer.enum';
 import { allowedFileFormats } from '../pipe/fileValidation.pipe';
 

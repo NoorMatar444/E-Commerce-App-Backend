@@ -11,6 +11,8 @@ import { UserRepo } from 'src/Rebo/user.repo';
 import { RedisService } from '../redis/redis.service';
 import userModel from 'src/models/user.model';
 import { RedisModule } from '../redis/redis.module';
+import { RolesGuard } from 'src/Security/Guards/authorization.guard';
+import { StripeService } from 'src/common/Services/stripe.service';
 
 @Module({
   imports: [
@@ -31,7 +33,10 @@ import { RedisModule } from '../redis/redis.module';
     JwtService,
     UserRepo,
     RedisService,
+    RolesGuard,
+    StripeService,
   ],
   controllers: [OrderController],
+  exports: [OrderService],
 })
 export class OrderModule {}

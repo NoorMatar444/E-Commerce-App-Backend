@@ -21,8 +21,20 @@ export abstract class DbRepo<T> {
   }) {
     return await this.model.findOne(filter, projection, options);
   }
-  async create({ data, options }: { data: any; options?: CreateOptions }) {
-    return await this.model.create(data, options);
+  async create({
+    data,
+    options,
+  }: {
+    data: any;
+    options?: CreateOptions;
+  }): Promise<any> {
+    const result = await this.model.create(data, options);
+
+    if (Array.isArray(data)) {
+      return result;
+    }
+
+    return Array.isArray(result) ? result[0] : result;
   }
   async findById({
     id,
