@@ -69,7 +69,7 @@ export class NotificationService {
       throw new NotFoundException('Notification not found');
     }
 
-    return await this.notificationRepo.updateOne({
+    return this.notificationRepo.findOneAndUpdate({
       filter: {
         _id: userNotification._id,
         receiver: user._id,
@@ -77,6 +77,7 @@ export class NotificationService {
       update: {
         isRead: true,
       },
+      options: { new: true },
     });
   }
 
@@ -99,13 +100,13 @@ export class NotificationService {
   private async persistAndPublish(
     data: Record<string, unknown>,
   ): Promise<IHNotification> {
-    // Step 1: Persist — MongoDB is the source of truth (works even if user is offline)
     const createdNotification = await this.notificationRepo.create({ data });
-    const notification = Array.isArray(createdNotification)
-      ? createdNotification[0]
-      : createdNotification;
+    const notification = (
+      Array.isArray(createdNotification)
+        ? createdNotification[0]
+        : createdNotification
+    ) as IHNotification;
 
-    // Step 2: Emit — triggers NotificationRealtimeListener + NotificationEmailListener
     this.eventEmitter.emit(
       'notification.created',
       new NotificationCreatedEvent(notification),
@@ -137,10 +138,15 @@ export class NotificationService {
           title: 'Order Cancelled',
           message: 'Your order has been cancelled.',
         };
+      case OrderStatus.PENDING:
+        return {
+          title: 'Order Pending',
+          message: 'Your order is pending payment confirmation.',
+        };
       default:
         return {
           title: 'Order Updated',
-          message: `Your order status is now ${status}.`,
+          message: `Your order status is now ${String(status)}.`,
         };
     }
   }

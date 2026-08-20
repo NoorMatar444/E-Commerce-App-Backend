@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<App> | undefined;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -13,17 +13,27 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
+    );
     await app.init();
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
+    return request(app!.getHttpServer())
       .get('/')
       .expect(200)
       .expect('Hello World!');
   });
 
   afterEach(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+      app = undefined;
+    }
   });
 });

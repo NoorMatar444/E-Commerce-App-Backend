@@ -48,12 +48,15 @@ export class CategoryService {
     return category;
   }
 
-  async getAllCategories(page: number, limit: number) {
+  async getAllCategories(page = 1, limit = 10) {
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+
     const categories = await this.categoryRepo.findAll({
       filter: {},
       options: {
-        skip: (page - 1) * limit,
-        limit,
+        skip: (safePage - 1) * safeLimit,
+        limit: safeLimit,
       },
     });
     return categories;
@@ -108,6 +111,8 @@ export class CategoryService {
     }
 
     await this.categoryRepo.deleteOne({ filter: { _id: categoryId } });
+
+    return { message: 'Category deleted successfully' };
   }
 
   async validateCategoryExists(categoryId: string): Promise<Category> {

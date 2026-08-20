@@ -14,12 +14,16 @@ import type { IHUser } from 'src/models/user.model';
 import { NotificationDto } from './notification.dto';
 import { NotificationService } from './notification.service';
 import { AuthGuard } from 'src/Security/Guards/authentication.guard';
+import { RolesGuard } from 'src/Security/Guards/authorization.guard';
+import { Roles } from 'src/common/decorators/roles.decorators';
+import { RoleEnum } from 'src/common/enums/user.enum';
 
 @Controller('notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
   @Post('create-notification')
   async createNotification(
     @User() user: IHUser,

@@ -11,6 +11,7 @@ import { UserModule } from '../user/user.module';
 import { ProductControllers } from './product.controller';
 import { ProductService } from './product.service';
 import { RolesGuard } from 'src/Security/Guards/authorization.guard';
+import { AuthGuard } from 'src/Security/Guards/authentication.guard';
 import { CategoryModule } from '../category/category.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { CategoryModule } from '../category/category.module';
     JwtService,
     RedisService,
     RolesGuard,
+    AuthGuard,
   ],
   controllers: [ProductControllers],
   exports: [ProductRepo],

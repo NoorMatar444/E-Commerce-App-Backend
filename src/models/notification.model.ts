@@ -30,6 +30,7 @@ export class Notification {
   message!: string;
 
   @Prop({
+    type: String,
     enum: NotificationType,
     required: true,
   })

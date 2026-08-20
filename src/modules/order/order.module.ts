@@ -7,12 +7,12 @@ import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 import { TokenServices } from 'src/common/Services/Token.services';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepo } from 'src/Rebo/user.repo';
 import { RedisService } from '../redis/redis.service';
-import userModel from 'src/models/user.model';
 import { RedisModule } from '../redis/redis.module';
 import { RolesGuard } from 'src/Security/Guards/authorization.guard';
+import { AuthGuard } from 'src/Security/Guards/authentication.guard';
 import { StripeService } from 'src/common/Services/stripe.service';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -23,17 +23,17 @@ import { StripeService } from 'src/common/Services/stripe.service';
       },
     ]),
     ProductModule,
-    userModel,
     RedisModule,
+    UserModule,
   ],
   providers: [
     OrderService,
     OrderRepo,
     TokenServices,
     JwtService,
-    UserRepo,
     RedisService,
     RolesGuard,
+    AuthGuard,
     StripeService,
   ],
   controllers: [OrderController],

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -47,7 +48,7 @@ export class OrderController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('cancel-order/:id')
+  @Delete('cancel-order/:id')
   async cancelOrder(@Param('id') orderId: string, @User() user: IHUser) {
     return this.orderService.cancelOrder(orderId, user);
   }

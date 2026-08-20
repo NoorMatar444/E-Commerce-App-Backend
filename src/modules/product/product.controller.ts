@@ -14,9 +14,7 @@ import {
 import { AuthGuard } from 'src/Security/Guards/authentication.guard';
 import { RolesGuard } from 'src/Security/Guards/authorization.guard';
 import { ProductDto, UpdateProductDto } from './product.dto';
-import type { IHUser } from 'src/models/user.model';
 import { ProductService } from './product.service';
-import { User } from 'src/common/decorators/user.decorator';
 import { RoleEnum } from 'src/common/enums/user.enum';
 import { Roles } from 'src/common/decorators/roles.decorators';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -35,19 +33,16 @@ export class ProductControllers {
   async createProduct(
     @Body() body: ProductDto,
     @UploadedFiles() files: Express.Multer.File[],
-    @User() user: IHUser,
-  ) {
-    return this.productService.createProduct(body, user, files);
+  ): Promise<unknown> {
+    return this.productService.createProduct(body, files);
   }
 
   @Get('get-product-by-id/:id')
-  @UseGuards(AuthGuard)
   async getProductById(@Param('id') productId: string) {
     return this.productService.getProductById(productId);
   }
 
   @Get('get-all-product')
-  @UseGuards(AuthGuard)
   async getAllProducts(
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -65,15 +60,14 @@ export class ProductControllers {
     @Body() body: UpdateProductDto,
     @Param('id') productId: string,
     @UploadedFiles() files: Express.Multer.File[],
-    @User() user: IHUser,
-  ) {
-    return this.productService.updateProduct(body, productId, user, files);
+  ): Promise<unknown> {
+    return this.productService.updateProduct(body, productId, files);
   }
 
   @Delete('delete-product/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  async deleteProduct(@Param('id') productId: string, @User() user: IHUser) {
-    return this.productService.deleteProduct(productId, user);
+  async deleteProduct(@Param('id') productId: string): Promise<unknown> {
+    return this.productService.deleteProduct(productId);
   }
 }

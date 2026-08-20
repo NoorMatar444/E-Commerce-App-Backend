@@ -11,6 +11,7 @@ import { UserModule } from '../../user/user.module';
 import { OrderModule } from '../../order/order.module';
 import { CartService } from './cart.service';
 import { CartController } from './cart.controller';
+import { AuthGuard } from 'src/Security/Guards/authentication.guard';
 
 @Module({
   imports: [
@@ -25,7 +26,14 @@ import { CartController } from './cart.controller';
     UserModule,
     RedisModule,
   ],
-  providers: [CartService, CartRepo, TokenServices, JwtService, RedisService],
+  providers: [
+    CartService,
+    CartRepo,
+    TokenServices,
+    JwtService,
+    RedisService,
+    AuthGuard,
+  ],
   controllers: [CartController],
   exports: [CartService],
 })

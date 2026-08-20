@@ -6,8 +6,10 @@ import {
   IsString,
   IsStrongPassword,
   Matches,
+  MinLength,
 } from 'class-validator';
 import { IMatch } from 'src/common/decorators/match.decorators';
+import { GenderEnum } from 'src/common/enums/user.enum';
 
 export class SignupDto {
   @IsString()
@@ -19,8 +21,8 @@ export class SignupDto {
   @IsString()
   @IMatch(['password'])
   confirmPassword!: string;
-  @IsEnum(['male', 'female'])
-  gender!: string;
+  @IsEnum(GenderEnum)
+  gender!: GenderEnum;
   @IsPhoneNumber()
   phone!: string;
 }
@@ -28,7 +30,8 @@ export class SignupDto {
 export class LoginDto {
   @IsEmail()
   email!: string;
-  @IsStrongPassword()
+  @IsString()
+  @MinLength(1)
   password!: string;
 }
 export class ConfirmEmailDto {
@@ -43,12 +46,6 @@ export class ConfirmEmailDto {
 export class resendConfirmEmailOtpDto {
   @IsEmail()
   email!: string;
-  @IsNotEmpty()
-  @IsString()
-  @Matches(/^\d{6}$/, {
-    message: 'OTP must be exactly 6 digits',
-  })
-  otp!: string;
 }
 
 export class sendForgetPasswordOtpDto {

@@ -14,6 +14,7 @@ import { OrderDocument } from 'src/models/order.model';
 import { OrderCreatedEvent } from 'src/common/events/orders/order-created.event';
 import { OrderStatusUpdatedEvent } from 'src/common/events/orders/order-status-updated.event';
 import { StripeService } from 'src/common/Services/stripe.service';
+import Stripe from 'stripe';
 
 // Shared by the DTO items (product as string) and the stored order items
 // (product as ObjectId), both of which drive stock movements.
@@ -35,70 +36,103 @@ export class OrderService {
     body: CreateOrderDto,
     user: IHUser,
   ): Promise<OrderDocument> {
-    // 1. Get product IDs from the order items
-    const productIds = body.items.map((item) => item.product);
+    const quantityByProduct = new Map<string, number>();
 
-    // 2. Get the real products from the database
+    for (const item of body.items) {
+      const productId = item.product.toString();
+      quantityByProduct.set(
+        productId,
+        (quantityByProduct.get(productId) ?? 0) + item.quantity,
+      );
+    }
+
+    const uniqueProductIds = [...quantityByProduct.keys()];
+
     const products = await this.productRepo.findAll({
       filter: {
-        _id: { $in: productIds },
+        _id: { $in: uniqueProductIds },
+        isActive: true,
       },
     });
 
-    // 3. Make sure all requested products exist
-    if (products.length !== productIds.length) {
+    if (products.length !== uniqueProductIds.length) {
       throw new NotFoundException('One or more products not found');
     }
 
-    // 4. Calculate the total using prices from the database
-    const totalAmount = body.items.reduce((total, item) => {
+    const orderItems = uniqueProductIds.map((productId) => {
       const product = products.find(
-        (product) => product._id.toString() === item.product.toString(),
+        (entry) => entry._id.toString() === productId,
       );
 
       if (!product) {
         throw new NotFoundException('Product not found');
       }
 
-      // 5. Check stock
-      if (product.stock < item.quantity) {
+      const quantity = quantityByProduct.get(productId)!;
+
+      if (product.stock < quantity) {
         throw new BadRequestException(
           `Not enough stock for product ${product.name}`,
         );
       }
 
-      return total + item.quantity * product.price;
-    }, 0);
+      return {
+        product: product._id,
+        quantity,
+        price: product.price,
+      };
+    });
 
-    // 6. Take the units out of stock before the order exists, so two checkouts
-    // racing for the last unit cannot both succeed
-    await this.reserveStock(body.items);
+    const totalAmount = orderItems.reduce(
+      (total, item) => total + item.quantity * item.price,
+      0,
+    );
 
-    // 7. Create the order. Only the write is guarded, because once the order
-    // exists the reserved units belong to it and must not be given back.
+    const stockChanges: StockChange[] = orderItems.map((item) => ({
+      product: item.product,
+      quantity: item.quantity,
+    }));
+
+    await this.reserveStock(stockChanges);
+
+    const initialStatus =
+      body.paymentMethod === PaymentMethod.cash
+        ? OrderStatus.CONFIRMED
+        : OrderStatus.PENDING;
+
     let order: OrderDocument;
 
     try {
-      order = (await this.orderRepo.create({
+      order = await this.orderRepo.create({
         data: {
           user: user._id,
-          ...body,
-          status: OrderStatus.PENDING,
+          items: orderItems,
+          paymentMethod: body.paymentMethod,
+          status: initialStatus,
           totalAmount,
         },
-      })) as OrderDocument;
+      });
     } catch (error) {
-      await this.releaseStock(body.items);
+      await this.releaseStock(stockChanges);
       throw error;
     }
 
-    // Announce order creation — OrderCreatedListener will create a notification
-    // OrderService does NOT know about notifications, socket, or email
     this.eventEmitter.emit(
-      'order.created', // must match @OnEvent('order.created') in OrderCreatedListener
+      'order.created',
       new OrderCreatedEvent(order._id, user._id),
     );
-    // 8. Return the created order
+
+    if (initialStatus === OrderStatus.CONFIRMED) {
+      this.eventEmitter.emit(
+        'order.status.updated',
+        new OrderStatusUpdatedEvent(
+          order._id,
+          user._id,
+          OrderStatus.CONFIRMED,
+        ),
+      );
+    }
+
     return order;
   }
 
@@ -123,6 +157,11 @@ export class OrderService {
         _id: orderId,
         user: user._id,
       },
+      populate: [
+        {
+          path: 'items.product',
+        },
+      ],
     });
     if (!order) {
       throw new NotFoundException('order not found');
@@ -175,7 +214,12 @@ export class OrderService {
       update: {
         status: status,
       },
+      options: { new: true },
     });
+
+    if (!updatedOrder) {
+      throw new NotFoundException('order not exist');
+    }
 
     // Comparing against the previous status keeps a repeated cancel from
     // returning the same units to stock twice
@@ -187,22 +231,25 @@ export class OrderService {
     }
 
     this.eventEmitter.emit(
-      'order.status.updated', // must match @OnEvent('order.status.updated')
+      'order.status.updated',
       new OrderStatusUpdatedEvent(
-        updatedOrder!._id,
-        updatedOrder!.user,
+        updatedOrder._id,
+        updatedOrder.user,
         status,
       ),
     );
 
     return updatedOrder;
   }
-  async getAllOrders(page: number, limit: number) {
+  async getAllOrders(page = 1, limit = 10) {
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+
     const orders = await this.orderRepo.findAll({
       filter: {},
       options: {
-        skip: (page - 1) * limit,
-        limit,
+        skip: (safePage - 1) * safeLimit,
+        limit: safeLimit,
       },
     });
     return orders;
@@ -317,7 +364,7 @@ export class OrderService {
       );
     }
 
-    let event;
+    let event: Stripe.Event;
     try {
       event = this.stripeService.constructEvent(rawBody, signature);
     } catch {

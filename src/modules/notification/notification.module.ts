@@ -17,6 +17,8 @@ import { EmailServices } from 'src/common/Services/email.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserModule } from 'src/modules/user/user.module';
 import { RedisModule } from 'src/modules/redis/redis.module';
+import { AuthGuard } from 'src/Security/Guards/authentication.guard';
+import { RolesGuard } from 'src/Security/Guards/authorization.guard';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { RedisModule } from 'src/modules/redis/redis.module';
     TokenServices, // Required by NotificationGateway for JWT auth on connect
     EmailServices, // Required by NotificationEmailListener
     JwtService,
+    AuthGuard,
+    RolesGuard,
   ],
 
   exports: [NotificationService],

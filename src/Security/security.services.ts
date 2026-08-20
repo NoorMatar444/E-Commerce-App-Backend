@@ -42,6 +42,8 @@ export class SecurityServices {
     message: string;
     ENCRYPTION_KEY?: string;
   }) {
-    return CryptoJS.AES.decrypt(message, ENCRYPTION_KEY).toString();
+    return CryptoJS.AES.decrypt(message, ENCRYPTION_KEY).toString(
+      CryptoJS.enc.Utf8,
+    );
   }
 }

@@ -13,9 +13,9 @@ import { SocketAuthType } from 'src/common/interface/socket.interface';
 // Clients connect to: http://localhost:3000/notifications
 @WebSocketGateway({
   cors: {
-    origin: '*', // Allow any frontend origin (restrict in production)
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
-  namespace: '/notifications', // Separate channel from default socket path
+  namespace: '/notifications',
 })
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect

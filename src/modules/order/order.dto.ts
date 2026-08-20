@@ -15,13 +15,10 @@ export class CreateOrderItemDto {
   @IsNotEmpty()
   product!: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsPositive()
   quantity!: number;
-
-  @IsNumber()
-  @IsPositive()
-  price!: number;
 }
 
 export class CreateOrderDto {

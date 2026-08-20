@@ -33,7 +33,7 @@ export class User {
   profilePic!: string;
   @Prop({ type: [String] })
   coverPics!: string[];
-  @Prop({ type: String, enum: RoleEnum, default: RoleEnum.ADMIN })
+  @Prop({ type: String, enum: RoleEnum, default: RoleEnum.USER })
   role!: RoleEnum;
   @Prop({ type: Date })
   changeCreditTime!: Date;

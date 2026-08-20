@@ -19,4 +19,4 @@ async function bootstrap() {
     console.log(`connect on port ${PORT}`);
   });
 }
-bootstrap();
+void bootstrap();

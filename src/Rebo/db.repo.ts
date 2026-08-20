@@ -14,12 +14,20 @@ export abstract class DbRepo<T> {
     filter,
     projection,
     options,
+    populate,
   }: {
     filter?: QueryFilter<T>;
     projection?: ProjectionType<T>;
     options?: QueryOptions<T>;
+    populate?: PopulateOptions | PopulateOptions[];
   }) {
-    return await this.model.findOne(filter, projection, options);
+    const query = this.model.findOne(filter, projection, options);
+
+    if (populate) {
+      return await query.populate(populate).exec();
+    }
+
+    return await query.exec();
   }
   async create({
     data,

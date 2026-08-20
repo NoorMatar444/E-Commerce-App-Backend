@@ -28,12 +28,10 @@ export class CategoryController {
     return this.categoryService.createCategory(body, user);
   }
   @Get('get-category-by-id/:id')
-  @UseGuards(AuthGuard)
   async getCategoryById(@Param('id') categoryId: string) {
     return this.categoryService.getCategoryById(categoryId);
   }
   @Get('get-all-category')
-  @UseGuards(AuthGuard)
   async getAllCategories(
     @Query('page') page: number,
     @Query('limit') limit: number,

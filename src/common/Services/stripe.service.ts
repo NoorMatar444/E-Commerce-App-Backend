@@ -4,21 +4,27 @@ import Stripe from 'stripe';
 
 @Injectable()
 export class StripeService {
-  private readonly stripe: Stripe;
-  private readonly webhookSecret: string | undefined;
+  private stripe: Stripe | null = null;
+  private webhookSecret: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-
-    // Fail at boot so a missing key is obvious, instead of sending empty auth to Stripe
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
-    }
-
-    this.stripe = new Stripe(secretKey);
     this.webhookSecret = this.configService.get<string>(
       'STRIPE_WEBHOOK_SECRET',
     );
+  }
+
+  private getClient(): Stripe {
+    if (!this.stripe) {
+      const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+
+      if (!secretKey) {
+        throw new Error('STRIPE_SECRET_KEY is not configured');
+      }
+
+      this.stripe = new Stripe(secretKey);
+    }
+
+    return this.stripe;
   }
 
   async createCheckoutSession({
@@ -35,27 +41,24 @@ export class StripeService {
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
-    // Checkout Session is created on the server so the secret key never leaves the backend
-    return this.stripe.checkout.sessions.create({
+    return this.getClient().checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       line_items,
       customer_email,
       metadata,
       ...(discounts?.length ? { discounts } : {}),
-      // Stripe replaces {CHECKOUT_SESSION_ID} after a successful payment
       success_url: `${frontendUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontendUrl}/order/cancel`,
     });
   }
 
-  // Signature check needs the raw request bytes, not the parsed JSON body
   constructEvent(rawBody: Buffer, signature: string) {
     if (!this.webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
     }
 
-    return this.stripe.webhooks.constructEvent(
+    return this.getClient().webhooks.constructEvent(
       rawBody,
       signature,
       this.webhookSecret,

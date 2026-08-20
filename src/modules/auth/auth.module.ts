@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UserModule } from '../user/user.module';
 import { RedisModule } from '../redis/redis.module';
 import { AuthService } from './auth.service';
-import { SecurityServices } from 'src/Security/security.services';
+import { SecurityModule } from 'src/Security/security.module';
 import { ConfigService } from '@nestjs/config';
 import { TokenServices } from 'src/common/Services/Token.services';
 import { EmailServices } from 'src/common/Services/email.service';
@@ -11,11 +11,10 @@ import { RedisService } from '../redis/redis.service';
 import { AuthController } from './auth.controller';
 
 @Module({
-  imports: [UserModule, RedisModule],
+  imports: [UserModule, RedisModule, SecurityModule],
 
   providers: [
     AuthService,
-    SecurityServices,
     ConfigService,
     TokenServices,
     EmailServices,

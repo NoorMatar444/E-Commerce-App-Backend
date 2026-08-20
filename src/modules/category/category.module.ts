@@ -8,6 +8,7 @@ import { UserModule } from '../user/user.module';
 import { CategoryService } from './category.service';
 import { RedisService } from '../redis/redis.service';
 import { RolesGuard } from 'src/Security/Guards/authorization.guard';
+import { AuthGuard } from 'src/Security/Guards/authentication.guard';
 import { CategoryController } from './category.controller';
 import { TokenServices } from 'src/common/Services/Token.services';
 import { ProductModule } from '../product/product.module';
@@ -31,6 +32,7 @@ import { ProductModule } from '../product/product.module';
     RedisService,
     RolesGuard,
     TokenServices,
+    AuthGuard,
   ],
   controllers: [CategoryController],
   exports: [CategoryService],

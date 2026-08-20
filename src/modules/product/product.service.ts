@@ -2,10 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ProductDto, UpdateProductDto } from './product.dto';
 import { ProductRepo } from 'src/Rebo/product.repo';
-import { IHUser } from 'src/models/user.model';
 import { CategoryService } from '../category/category.service';
 import { S3BucketServices } from 'src/common/Services/s3Bucket.service';
 import { storageApproachEnum } from 'src/common/enums/multer.enum';
+import { ProductDocument } from 'src/models/product.model';
 
 @Injectable()
 export class ProductService {
@@ -18,7 +18,6 @@ export class ProductService {
 
   async createProduct(
     body: ProductDto,
-    _user: IHUser,
     files: Express.Multer.File[] = [],
   ) {
     await this.categoryService.validateActiveCategory(body.category);
@@ -26,14 +25,14 @@ export class ProductService {
     const uploadedImages = await this.uploadProductImages(files);
     const images = [...(body.images ?? []), ...uploadedImages];
 
-    const product = await this.productRepo.create({
+    const product = (await this.productRepo.create({
       data: {
         ...body,
         images,
       },
-    });
+    })) as ProductDocument;
 
-    return Array.isArray(product) ? product[0] : product;
+    return product;
   }
 
   async getProductById(productId: string) {
@@ -63,7 +62,6 @@ export class ProductService {
   async updateProduct(
     body: UpdateProductDto,
     productId: string,
-    _user: IHUser,
     files: Express.Multer.File[] = [],
   ) {
     const product = await this.productRepo.findOne({
@@ -95,7 +93,7 @@ export class ProductService {
     return updatedProduct;
   }
 
-  async deleteProduct(productId: string, _user: IHUser) {
+  async deleteProduct(productId: string) {
     const product = await this.productRepo.findOne({
       filter: { _id: productId },
     });
@@ -105,7 +103,7 @@ export class ProductService {
 
     return this.productRepo.findOneAndUpdate({
       filter: { _id: productId },
-      update: { isActive: false },
+      update: { isActive: false }, // soft delete by setting isActive to false
       options: { new: true },
     });
   }
